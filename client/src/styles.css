@@ -1,0 +1,203 @@
+/* アプリ全体のスタイル */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", Meiryo, sans-serif;
+  background: #f4f6f8;
+  color: #212529;
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.app-header h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+}
+
+.subtitle {
+  color: #868e96;
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.grand-total {
+  font-size: 16px;
+  margin: 8px 0 0;
+}
+
+.grand-total strong {
+  color: #ff6b6b;
+  font-size: 20px;
+}
+
+/* カード共通 */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.card h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+/* アップロードフォーム */
+form input[type="file"] {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.preview {
+  margin-bottom: 12px;
+}
+
+.preview img {
+  max-width: 100%;
+  max-height: 260px;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+button.primary {
+  background: #4dabf7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button.primary:disabled {
+  background: #adb5bd;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #e03131;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.muted {
+  color: #868e96;
+}
+
+/* グラフ */
+.charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.chart-card {
+  margin-bottom: 0;
+}
+
+@media (max-width: 700px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 一覧 */
+.record {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.record-date {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.record-store {
+  color: #495057;
+}
+
+.record-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.record-total {
+  font-weight: bold;
+  color: #ff6b6b;
+}
+
+button.delete {
+  background: transparent;
+  border: 1px solid #ffc9c9;
+  color: #e03131;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+button.delete:hover {
+  background: #fff5f5;
+}
+
+table.items {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+table.items th,
+table.items td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f1f3f5;
+  text-align: left;
+}
+
+table.items th {
+  color: #868e96;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+.right {
+  text-align: right;
+}
+
+.badge {
+  display: inline-block;
+  color: #fff;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+.app-footer {
+  text-align: center;
+  color: #adb5bd;
+  margin-top: 20px;
+}

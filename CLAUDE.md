@@ -4,9 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-kakeibo-app は家計簿アプリです（Claude Code 研修用プロジェクト）。
-本ディレクトリはまだ空のグリーンフィールド状態で、技術スタックは未定です。
-実装を始める際は、選定したスタックに合わせて本ファイルの「開発コマンド」節を更新してください。
+kakeibo-app はレシート画像を読み込んで自動記録する家計簿 Web アプリです（Claude Code 研修用プロジェクト）。
+レシート画像をアップロードすると Claude API（Vision）が商品名・金額・日付を読み取り、
+カテゴリ別に自動分類する。集計結果は Chart.js の円グラフ・棒グラフで可視化し、
+データはブラウザの localStorage に保存する。
+
+技術スタック:
+- フロントエンド: React + Vite（`client/`）、グラフは Chart.js / react-chartjs-2
+- バックエンド: Node.js + Express（`server.js`）。Claude API はここから呼び出す
+- モデル: `claude-haiku-4-5`（claude-haiku の最新バージョン）
+- API キー: `.env` の `ANTHROPIC_API_KEY` で管理（`.gitignore` 済み。ブラウザからは直接使わない）
 
 ## Git 運用ルール（重要）
 
@@ -37,11 +44,53 @@ git push -u origin main
 
 ## 開発コマンド
 
-技術スタック確定後に、ビルド・Lint・テスト（単体テストの個別実行方法を含む）・開発サーバー起動などのコマンドをここに追記する。
+初回セットアップ:
+
+```bash
+# 依存パッケージをまとめてインストール（ルート + client/）
+npm run install:all
+
+# .env を作成して API キーを設定
+cp .env.example .env   # ANTHROPIC_API_KEY を編集
+```
+
+開発サーバー起動:
+
+```bash
+# バックエンド(3001) と フロントエンド(5173) を同時起動
+npm run dev
+
+# 個別に起動する場合
+npm run server   # Express バックエンドのみ（node --watch）
+npm run client   # Vite 開発サーバーのみ
+```
+
+その他:
+
+```bash
+npm run build    # フロントエンドを本番ビルド（client/dist）
+```
+
+ブラウザは http://localhost:5173 を開く。Vite が `/api/*` をバックエンド(3001)へプロキシする。
+テスト・Lint は未導入。
 
 ## コード構成
 
-実装が進んだら、複数ファイルを横断して理解が必要な「全体像」（アーキテクチャ・データフロー・主要モジュールの役割）をここに記述する。
+データフロー:
+1. `client/` の `ReceiptUploader` が画像を base64 化し、`POST /api/analyze-receipt` へ送信
+2. `server.js` が Claude API（Vision + 構造化出力 `output_config.format`）を呼び、
+   `{ date, store, items:[{name, price, category}], total }` を返す
+3. フロント側で家計簿レコード化し、`App` の state と `localStorage`（`utils/storage.js`）に保存
+4. `Charts`（Chart.js）がカテゴリ別（円）・月別（棒）に集計して表示、`ExpenseList` が明細を一覧表示
+
+主要ファイル:
+- `server.js` — Express サーバー。`/api/analyze-receipt`（Claude呼び出し）、`/api/categories`、`/api/health`
+- `client/src/App.jsx` — 状態管理と localStorage 同期のルートコンポーネント
+- `client/src/components/` — `ReceiptUploader` / `ExpenseList` / `Charts`
+- `client/src/utils/` — `storage.js`（永続化）/ `categories.js`（カテゴリ定義・色）/ `image.js`（base64変換）
+
+カテゴリ定義は `server.js` の `CATEGORIES` と `client/src/utils/categories.js` の両方にあり、
+変更時は両方を一致させること。
 
 ## 言語
 

@@ -1,0 +1,18 @@
+# 依存パッケージ
+node_modules/
+client/node_modules/
+
+# 環境変数（APIキーを含むためコミットしない）
+.env
+.env.local
+
+# ビルド成果物
+dist/
+client/dist/
+
+# ログ
+*.log
+npm-debug.log*
+
+# OS 関連
+.DS_Store
