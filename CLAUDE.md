@@ -65,6 +65,15 @@ npm run server   # Express バックエンドのみ（node --watch）
 npm run client   # Vite 開発サーバーのみ
 ```
 
+開発サーバー停止:
+
+```bash
+# フォアグラウンドで起動している場合は Ctrl+C で両方停止
+
+# バックグラウンド起動時など、ポートを掴んだままのプロセスを停止する場合
+lsof -ti:3001,5173 | xargs kill   # 3001=バックエンド, 5173=フロント
+```
+
 その他:
 
 ```bash
