@@ -47,7 +47,7 @@ export default function App() {
       </header>
 
       <main>
-        <ReceiptUploader onAdd={handleAdd} />
+        <ReceiptUploader onAdd={handleAdd} records={records} />
         <Charts records={records} />
         <ExpenseList records={records} onDelete={handleDelete} />
       </main>

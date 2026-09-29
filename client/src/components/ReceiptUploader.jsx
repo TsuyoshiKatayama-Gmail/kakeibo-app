@@ -1,11 +1,13 @@
 // レシート画像をアップロードして Claude API で解析するコンポーネント
 import { useState } from "react";
 import { fileToBase64 } from "../utils/image.js";
+import { validateRecord } from "../utils/validation.js";
 
-export default function ReceiptUploader({ onAdd }) {
+export default function ReceiptUploader({ onAdd, records }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
+  const [warnings, setWarnings] = useState([]);
 
   // ファイル選択時にプレビューを表示
   function handleFileChange(e) {
@@ -30,6 +32,7 @@ export default function ReceiptUploader({ onAdd }) {
 
     setLoading(true);
     setError("");
+    setWarnings([]);
     try {
       // 画像を base64 に変換してバックエンドへ送信
       const { base64, mediaType } = await fileToBase64(file);
@@ -58,6 +61,22 @@ export default function ReceiptUploader({ onAdd }) {
             : (data.items || []).reduce((s, it) => s + (it.price || 0), 0),
         createdAt: Date.now(),
       };
+
+      // データ検証（負の金額・重複レシート）
+      const foundWarnings = validateRecord(record, records);
+      setWarnings(foundWarnings);
+      if (foundWarnings.length > 0) {
+        const proceed = window.confirm(
+          "以下の警告があります:\n\n" +
+            foundWarnings.map((w) => "・" + w).join("\n") +
+            "\n\nこのまま登録しますか？"
+        );
+        if (!proceed) {
+          // 登録をキャンセル（画像は残して再確認できるようにする）
+          return;
+        }
+      }
+
       onAdd(record);
 
       // フォームとプレビューをリセット
@@ -91,6 +110,16 @@ export default function ReceiptUploader({ onAdd }) {
         </button>
       </form>
       {error && <p className="error">{error}</p>}
+      {warnings.length > 0 && (
+        <div className="warnings">
+          <span className="warnings-title">⚠️ 検証警告</span>
+          <ul>
+            {warnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }
