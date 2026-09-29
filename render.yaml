@@ -1,0 +1,18 @@
+# Render (https://render.com) へのデプロイ設定
+# リポジトリを Render に接続すると、このファイルが自動で読み込まれる（Blueprint）。
+services:
+  - type: web
+    name: kakeibo-app
+    runtime: node
+    plan: free
+    # バックエンド依存の導入 → フロントエンドの依存導入＆ビルド
+    buildCommand: npm install && npm run build
+    # Express がフロントのビルド成果物も配信する
+    startCommand: npm start
+    envVars:
+      # Claude API キー（Render のダッシュボードで値を設定。Git には保存しない）
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # 簡易アクセス制限用パスワード（公開時は必ず設定することを推奨）
+      - key: APP_PASSWORD
+        sync: false

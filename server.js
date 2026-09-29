@@ -3,12 +3,19 @@
 // API キーをサーバー側だけに保持する（.env で管理し .gitignore 済み）。
 
 import "dotenv/config";
+import path from "path";
+import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
 import Anthropic from "@anthropic-ai/sdk";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// このファイルのあるディレクトリ（ESM には __dirname が無いため導出する）
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// フロントエンドの本番ビルド成果物の場所
+const CLIENT_DIST = path.join(__dirname, "client", "dist");
 
 // 使用するモデル（claude-haiku の最新バージョン）
 const MODEL = "claude-haiku-4-5";
@@ -35,9 +42,34 @@ if (!process.env.ANTHROPIC_API_KEY) {
 // Anthropic クライアント（ANTHROPIC_API_KEY を自動で読み込む）
 const anthropic = new Anthropic();
 
-// 画像は base64 で送られてくるためリクエストサイズの上限を広げる
 app.use(cors());
+
+// 簡易パスワード保護（Basic 認証）
+// 環境変数 APP_PASSWORD を設定した場合のみ有効になる。
+// 公開デプロイ時に第三者へ API キー経由の課金利用をされないための最小限の防御。
+if (process.env.APP_PASSWORD) {
+  app.use((req, res, next) => {
+    const header = req.headers.authorization || "";
+    const [scheme, encoded] = header.split(" ");
+    if (scheme === "Basic" && encoded) {
+      const decoded = Buffer.from(encoded, "base64").toString();
+      // "user:password" 形式。パスワード部分（コロン以降）を照合する。
+      const password = decoded.slice(decoded.indexOf(":") + 1);
+      if (password === process.env.APP_PASSWORD) {
+        return next();
+      }
+    }
+    res.set("WWW-Authenticate", 'Basic realm="kakeibo"');
+    return res.status(401).send("認証が必要です。");
+  });
+}
+
+// 画像は base64 で送られてくるためリクエストサイズの上限を広げる
 app.use(express.json({ limit: "25mb" }));
+
+// フロントエンドの本番ビルドを静的配信する（本番環境用）
+// 開発時は Vite(5173) が配信するためこの経路は使われない。
+app.use(express.static(CLIENT_DIST));
 
 // Claude に返させる構造化データのスキーマ（構造化出力）
 const RECEIPT_SCHEMA = {
@@ -156,6 +188,17 @@ app.get("/api/categories", (_req, res) => {
 // 動作確認用のヘルスチェック
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, model: MODEL });
+});
+
+// SPA フォールバック: /api 以外の GET は index.html を返す（本番配信用）
+app.use((req, res, next) => {
+  if (req.method === "GET" && !req.path.startsWith("/api")) {
+    return res.sendFile(path.join(CLIENT_DIST, "index.html"), (err) => {
+      // ビルド未実施（開発時など）は次のハンドラへ
+      if (err) next();
+    });
+  }
+  next();
 });
 
 app.listen(PORT, () => {

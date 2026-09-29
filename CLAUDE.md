@@ -83,6 +83,13 @@ npm run build    # フロントエンドを本番ビルド（client/dist）
 ブラウザは http://localhost:5173 を開く。Vite が `/api/*` をバックエンド(3001)へプロキシする。
 テスト・Lint は未導入。
 
+デプロイ（Web公開）:
+
+本番では Express がフロントのビルド成果物（`client/dist`）も配信するため、1サービスで公開できる。
+ビルドは `npm run build`、起動は `npm start`。環境変数 `ANTHROPIC_API_KEY`（必須）と
+`APP_PASSWORD`（設定すると Basic 認証でアクセス制限。公開時は必須推奨）を使う。
+Render 用の `render.yaml` と詳細手順は [DEPLOY.md](DEPLOY.md) を参照。
+
 ## コード構成
 
 データフロー:
