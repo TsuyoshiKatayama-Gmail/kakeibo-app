@@ -125,6 +125,143 @@ button.primary:disabled {
   margin-bottom: 4px;
 }
 
+/* 確認・修正ダイアログ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: #e8590c;
+}
+
+.modal-hint {
+  color: #868e96;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+.modal-field {
+  margin-bottom: 14px;
+}
+
+.modal-field > label {
+  display: block;
+  font-size: 13px;
+  color: #495057;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.modal-field input[type="text"],
+.modal-field input[type="date"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.modal-items {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.modal-items th,
+.modal-items td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #f1f3f5;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.modal-items th {
+  color: #868e96;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+.modal-items input[type="text"],
+.modal-items input[type="number"],
+.modal-items select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.modal-items .price-input {
+  text-align: right;
+}
+
+.add-item {
+  margin-top: 8px;
+  background: transparent;
+  border: 1px dashed #adb5bd;
+  color: #495057;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.add-item:hover {
+  background: #f8f9fa;
+}
+
+.modal-total {
+  text-align: right;
+  font-size: 15px;
+  margin: 12px 0;
+}
+
+.modal-total strong {
+  color: #ff6b6b;
+  font-size: 18px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+button.cancel {
+  background: transparent;
+  border: 1px solid #ced4da;
+  color: #495057;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button.cancel:hover {
+  background: #f8f9fa;
+}
+
 /* グラフ */
 .charts {
   display: grid;

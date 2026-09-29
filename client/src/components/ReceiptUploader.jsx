@@ -2,12 +2,17 @@
 import { useState } from "react";
 import { fileToBase64 } from "../utils/image.js";
 import { validateRecord } from "../utils/validation.js";
+import ReceiptEditModal from "./ReceiptEditModal.jsx";
 
 export default function ReceiptUploader({ onAdd, records }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
   const [warnings, setWarnings] = useState([]);
+  // 警告がある場合に確認・修正ダイアログで扱う一時レコード
+  const [pending, setPending] = useState(null);
+  // 直近に登録したフォーム input（登録確定時にリセットするため保持）
+  const [formEl, setFormEl] = useState(null);
 
   // ファイル選択時にプレビューを表示
   function handleFileChange(e) {
@@ -62,19 +67,14 @@ export default function ReceiptUploader({ onAdd, records }) {
         createdAt: Date.now(),
       };
 
-      // データ検証（負の金額・重複レシート）
+      // データ検証（店舗名・商品名の欠損・負の金額・重複レシート）
       const foundWarnings = validateRecord(record, records);
       setWarnings(foundWarnings);
       if (foundWarnings.length > 0) {
-        const proceed = window.confirm(
-          "以下の警告があります:\n\n" +
-            foundWarnings.map((w) => "・" + w).join("\n") +
-            "\n\nこのまま登録しますか？"
-        );
-        if (!proceed) {
-          // 登録をキャンセル（画像は残して再確認できるようにする）
-          return;
-        }
+        // 警告がある場合は確認・修正ダイアログを表示（登録は保留）
+        setPending(record);
+        setFormEl(input);
+        return;
       }
 
       onAdd(record);
@@ -87,6 +87,21 @@ export default function ReceiptUploader({ onAdd, records }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  // ダイアログで修正内容を確定して登録
+  function handleConfirmPending(fixedRecord) {
+    onAdd(fixedRecord);
+    setPending(null);
+    setWarnings([]);
+    if (formEl) formEl.value = "";
+    setFormEl(null);
+    setPreviewUrl("");
+  }
+
+  // ダイアログをキャンセル（画像は残して再確認できるようにする）
+  function handleCancelPending() {
+    setPending(null);
   }
 
   return (
@@ -110,7 +125,7 @@ export default function ReceiptUploader({ onAdd, records }) {
         </button>
       </form>
       {error && <p className="error">{error}</p>}
-      {warnings.length > 0 && (
+      {warnings.length > 0 && !pending && (
         <div className="warnings">
           <span className="warnings-title">⚠️ 検証警告</span>
           <ul>
@@ -119,6 +134,14 @@ export default function ReceiptUploader({ onAdd, records }) {
             ))}
           </ul>
         </div>
+      )}
+      {pending && (
+        <ReceiptEditModal
+          record={pending}
+          warnings={warnings}
+          onConfirm={handleConfirmPending}
+          onCancel={handleCancelPending}
+        />
       )}
     </section>
   );
