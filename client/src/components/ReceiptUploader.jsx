@@ -120,7 +120,11 @@ export default function ReceiptUploader({ onAdd, records }) {
             <img src={previewUrl} alt="レシートのプレビュー" />
           </div>
         )}
-        <button type="submit" disabled={loading} className="primary">
+        <button
+          type="submit"
+          disabled={loading || !previewUrl}
+          className="primary"
+        >
           {loading ? "解析中…" : "解析して登録"}
         </button>
       </form>
