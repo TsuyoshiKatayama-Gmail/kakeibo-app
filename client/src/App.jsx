@@ -53,7 +53,7 @@ export default function App() {
       </main>
 
       <footer className="app-footer">
-        <small>研修用サンプル / モデル: gemini-2.5-flash</small>
+        <small>研修用サンプル / モデル: gemini-3.8-flash</small>
       </footer>
     </div>
   );

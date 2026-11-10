@@ -13,7 +13,7 @@ kakeibo-app はレシート画像を読み込んで自動記録する家計簿 W
 - フロントエンド: React + Vite（`client/`）、グラフは Chart.js / react-chartjs-2
 - バックエンド: Node.js + Express（`server.js`）。Gemini API はここから呼び出す
 - SDK: `@google/genai`（Google 公式の Gen AI SDK）
-- モデル: `gemini-2.5-flash`（Vision 対応モデル）
+- モデル: `gemini-3.8-flash`（Vision 対応モデル）
 - API キー: `.env` の `GEMINI_API_KEY` で管理（`.gitignore` 済み。ブラウザからは直接使わない）
 
 ## Git 運用ルール（重要）

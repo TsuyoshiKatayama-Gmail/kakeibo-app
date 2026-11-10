@@ -18,7 +18,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLIENT_DIST = path.join(__dirname, "client", "dist");
 
 // 使用するモデル（Gemini の Vision 対応モデル）
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.8-flash";
 
 // カテゴリの候補。Gemini にはこの一覧から必ず1つを選ばせる。
 const CATEGORIES = [
@@ -40,7 +40,13 @@ if (!process.env.GEMINI_API_KEY) {
 }
 
 // Gemini クライアント（GEMINI_API_KEY を使用）
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// timeout: 1リクエストの上限（ミリ秒）。混雑(503/504)時に SDK が裏で延々と
+// リトライして数分ハングするのを防ぎ、早めに失敗させてユーザーに再試行を促す。
+const REQUEST_TIMEOUT_MS = 60000;
+const genAI = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  httpOptions: { timeout: REQUEST_TIMEOUT_MS },
+});
 
 app.use(cors());
 
@@ -149,6 +155,9 @@ app.post("/api/analyze-receipt", async (req, res) => {
       config: {
         responseMimeType: "application/json",
         responseSchema: RECEIPT_SCHEMA,
+        // レシートの読み取りは複雑な推論を要さないため思考を最小化し、
+        // 応答を速くする（thinkingLevel: "low"）。
+        thinkingConfig: { thinkingLevel: "low" },
       },
     });
 
@@ -166,8 +175,13 @@ app.post("/api/analyze-receipt", async (req, res) => {
     console.error("レシート解析エラー:", err);
     // Google GenAI SDK のエラーはステータスコードを持つ場合がある
     const status = err?.status && Number.isInteger(err.status) ? err.status : 500;
+    // 混雑(503/504)・レート制限(429)は一時的なので、再試行を促すメッセージにする
+    const isBusy = status === 503 || status === 504 || status === 429;
+    const message = isBusy
+      ? "ただいま Gemini が混雑しています。少し時間をおいて、もう一度お試しください。"
+      : "レシートの解析に失敗しました。";
     res.status(status).json({
-      error: "レシートの解析に失敗しました。",
+      error: message,
       detail: err?.message ?? String(err),
     });
   }
