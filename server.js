@@ -1,5 +1,5 @@
 // レシート読み込み家計簿アプリのバックエンドサーバー
-// ブラウザから直接 Claude API を呼ばず、この Node.js サーバーを経由させることで
+// ブラウザから直接 Gemini API を呼ばず、この Node.js サーバーを経由させることで
 // API キーをサーバー側だけに保持する（.env で管理し .gitignore 済み）。
 
 import "dotenv/config";
@@ -7,7 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,10 +17,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // フロントエンドの本番ビルド成果物の場所
 const CLIENT_DIST = path.join(__dirname, "client", "dist");
 
-// 使用するモデル（claude-haiku の最新バージョン）
-const MODEL = "claude-haiku-4-5";
+// 使用するモデル（Gemini の Vision 対応モデル）
+const MODEL = "gemini-2.5-flash";
 
-// カテゴリの候補。Claude にはこの一覧から必ず1つを選ばせる。
+// カテゴリの候補。Gemini にはこの一覧から必ず1つを選ばせる。
 const CATEGORIES = [
   "食費",
   "日用品",
@@ -33,14 +33,14 @@ const CATEGORIES = [
 ];
 
 // API キーが無い場合は起動時に警告する
-if (!process.env.ANTHROPIC_API_KEY) {
+if (!process.env.GEMINI_API_KEY) {
   console.warn(
-    "[警告] 環境変数 ANTHROPIC_API_KEY が未設定です。.env.example をコピーして .env を作成してください。"
+    "[警告] 環境変数 GEMINI_API_KEY が未設定です。.env.example をコピーして .env を作成してください。"
   );
 }
 
-// Anthropic クライアント（ANTHROPIC_API_KEY を自動で読み込む）
-const anthropic = new Anthropic();
+// Gemini クライアント（GEMINI_API_KEY を使用）
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 app.use(cors());
 
@@ -71,7 +71,8 @@ app.use(express.json({ limit: "25mb" }));
 // 開発時は Vite(5173) が配信するためこの経路は使われない。
 app.use(express.static(CLIENT_DIST));
 
-// Claude に返させる構造化データのスキーマ（構造化出力）
+// Gemini に返させる構造化データのスキーマ（responseSchema）
+// ※ Gemini の responseSchema は additionalProperties 非対応のため付けない。
 const RECEIPT_SCHEMA = {
   type: "object",
   properties: {
@@ -98,7 +99,6 @@ const RECEIPT_SCHEMA = {
           },
         },
         required: ["name", "price", "category"],
-        additionalProperties: false,
       },
     },
     total: {
@@ -107,7 +107,6 @@ const RECEIPT_SCHEMA = {
     },
   },
   required: ["date", "store", "items", "total"],
-  additionalProperties: false,
 };
 
 // レシート解析エンドポイント
@@ -122,31 +121,20 @@ app.post("/api/analyze-receipt", async (req, res) => {
         .json({ error: "画像データ（imageBase64）と mediaType が必要です。" });
     }
 
-    // Claude API に画像を渡して内容を読み取らせる
-    const response = await anthropic.messages.create({
+    // Gemini API に画像を渡して内容を読み取らせる
+    const response = await genAI.models.generateContent({
       model: MODEL,
-      max_tokens: 2048,
-      // 構造化出力でスキーマに沿った JSON を必ず返させる
-      output_config: {
-        format: {
-          type: "json_schema",
-          schema: RECEIPT_SCHEMA,
-        },
-      },
-      messages: [
+      contents: [
         {
           role: "user",
-          content: [
+          parts: [
             {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: mediaType,
+              inlineData: {
+                mimeType: mediaType,
                 data: imageBase64,
               },
             },
             {
-              type: "text",
               text:
                 "これは日本のレシート画像です。購入日・店舗名・各商品の商品名と金額を読み取り、" +
                 "各商品を次のカテゴリのいずれかに分類してください: " +
@@ -157,21 +145,26 @@ app.post("/api/analyze-receipt", async (req, res) => {
           ],
         },
       ],
+      // 構造化出力でスキーマに沿った JSON を必ず返させる
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: RECEIPT_SCHEMA,
+      },
     });
 
-    // 構造化出力の場合、最初のテキストブロックに有効な JSON が入っている
-    const textBlock = response.content.find((b) => b.type === "text");
-    if (!textBlock) {
+    // responseMimeType: application/json の場合、text にスキーマ準拠の JSON が入る
+    const text = response.text;
+    if (!text) {
       return res
         .status(502)
-        .json({ error: "Claude から有効な応答が得られませんでした。" });
+        .json({ error: "Gemini から有効な応答が得られませんでした。" });
     }
 
-    const parsed = JSON.parse(textBlock.text);
+    const parsed = JSON.parse(text);
     res.json(parsed);
   } catch (err) {
     console.error("レシート解析エラー:", err);
-    // Anthropic SDK のエラーはステータスコードを持つ場合がある
+    // Google GenAI SDK のエラーはステータスコードを持つ場合がある
     const status = err?.status && Number.isInteger(err.status) ? err.status : 500;
     res.status(status).json({
       error: "レシートの解析に失敗しました。",

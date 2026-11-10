@@ -5,15 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## プロジェクト概要
 
 kakeibo-app はレシート画像を読み込んで自動記録する家計簿 Web アプリです（Claude Code 研修用プロジェクト）。
-レシート画像をアップロードすると Claude API（Vision）が商品名・金額・日付を読み取り、
+レシート画像をアップロードすると Gemini API（Vision）が商品名・金額・日付を読み取り、
 カテゴリ別に自動分類する。集計結果は Chart.js の円グラフ・棒グラフで可視化し、
 データはブラウザの localStorage に保存する。
 
 技術スタック:
 - フロントエンド: React + Vite（`client/`）、グラフは Chart.js / react-chartjs-2
-- バックエンド: Node.js + Express（`server.js`）。Claude API はここから呼び出す
-- モデル: `claude-haiku-4-5`（claude-haiku の最新バージョン）
-- API キー: `.env` の `ANTHROPIC_API_KEY` で管理（`.gitignore` 済み。ブラウザからは直接使わない）
+- バックエンド: Node.js + Express（`server.js`）。Gemini API はここから呼び出す
+- SDK: `@google/genai`（Google 公式の Gen AI SDK）
+- モデル: `gemini-2.5-flash`（Vision 対応モデル）
+- API キー: `.env` の `GEMINI_API_KEY` で管理（`.gitignore` 済み。ブラウザからは直接使わない）
 
 ## Git 運用ルール（重要）
 
@@ -52,7 +53,7 @@ git push -u origin main
 npm run install:all
 
 # .env を作成して API キーを設定
-cp .env.example .env   # ANTHROPIC_API_KEY を編集
+cp .env.example .env   # GEMINI_API_KEY を編集
 ```
 
 開発サーバー起動:
@@ -87,7 +88,7 @@ npm run build    # フロントエンドを本番ビルド（client/dist）
 デプロイ（Web公開）:
 
 本番では Express がフロントのビルド成果物（`client/dist`）も配信するため、1サービスで公開できる。
-ビルドは `npm run build`、起動は `npm start`。環境変数 `ANTHROPIC_API_KEY`（必須）と
+ビルドは `npm run build`、起動は `npm start`。環境変数 `GEMINI_API_KEY`（必須）と
 `APP_PASSWORD`（設定すると Basic 認証でアクセス制限。公開時は必須推奨）を使う。
 Render 用の `render.yaml` と詳細手順は [DEPLOY.md](DEPLOY.md) を参照。
 
@@ -95,13 +96,13 @@ Render 用の `render.yaml` と詳細手順は [DEPLOY.md](DEPLOY.md) を参照�
 
 データフロー:
 1. `client/` の `ReceiptUploader` が画像を base64 化し、`POST /api/analyze-receipt` へ送信
-2. `server.js` が Claude API（Vision + 構造化出力 `output_config.format`）を呼び、
+2. `server.js` が Gemini API（Vision + 構造化出力 `responseSchema`）を呼び、
    `{ date, store, items:[{name, price, category}], total }` を返す
 3. フロント側で家計簿レコード化し、`App` の state と `localStorage`（`utils/storage.js`）に保存
 4. `Charts`（Chart.js）がカテゴリ別（円）・月別（棒）に集計して表示、`ExpenseList` が明細を一覧表示
 
 主要ファイル:
-- `server.js` — Express サーバー。`/api/analyze-receipt`（Claude呼び出し）、`/api/categories`、`/api/health`
+- `server.js` — Express サーバー。`/api/analyze-receipt`（Gemini呼び出し）、`/api/categories`、`/api/health`
 - `client/src/App.jsx` — 状態管理と localStorage 同期のルートコンポーネント
 - `client/src/components/` — `ReceiptUploader` / `ExpenseList` / `Charts`
 - `client/src/utils/` — `storage.js`（永続化）/ `categories.js`（カテゴリ定義・色）/ `image.js`（base64変換）

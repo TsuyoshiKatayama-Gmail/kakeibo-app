@@ -36,7 +36,7 @@ export default function App() {
       <header className="app-header">
         <h1>🧾 レシート家計簿</h1>
         <p className="subtitle">
-          レシート画像をアップロードすると Claude が自動で読み取り・分類します。
+          レシート画像をアップロードすると Gemini が自動で読み取り・分類します。
         </p>
         {records.length > 0 && (
           <p className="grand-total">
@@ -53,7 +53,7 @@ export default function App() {
       </main>
 
       <footer className="app-footer">
-        <small>研修用サンプル / モデル: claude-haiku-4-5</small>
+        <small>研修用サンプル / モデル: gemini-2.5-flash</small>
       </footer>
     </div>
   );

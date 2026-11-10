@@ -1,4 +1,4 @@
-// レシート画像をアップロードして Claude API で解析するコンポーネント
+// レシート画像をアップロードして Gemini API で解析するコンポーネント
 import { useState } from "react";
 import { fileToBase64 } from "../utils/image.js";
 import { validateRecord } from "../utils/validation.js";

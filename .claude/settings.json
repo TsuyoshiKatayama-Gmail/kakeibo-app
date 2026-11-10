@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm uninstall *)",
+      "Bash(node --check server.js)",
+      "Bash(GEMINI_API_KEY=dummy node -e ' *)"
+    ]
+  }
+}
